@@ -2,10 +2,11 @@
 CC:=riscv64-unknown-elf-gcc
 exe:=dhrystone
 obj:=dhrystone_main.o dhrystone.o
+CFLAGS:= -march=rv64imaf -mabi=lp64
 all:$(obj)
-	$(CC) -o $(exe) $(obj)
+	$(CC) $(CFLAGS) -o $(exe) $(obj)
 %.o:%.c
-	$(CC) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 .PHONY:clean
 clean:
