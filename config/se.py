@@ -135,6 +135,12 @@ if args:
 multiprocesses = []
 numThreads = 1
 
+options.cpu_type = "DerivO3CPU"
+options.cpu_clock = '1MHz'
+options.sys_clock = '1GHz'
+options.l2cache = False
+options.cacheline_size = 256
+
 if options.bench:
     apps = options.bench.split("-")
     if len(apps) != options.num_cpus:
@@ -206,15 +212,6 @@ if options.elastic_trace_en:
 for cpu in system.cpu:
     cpu.clk_domain = system.cpu_clk_domain
 
-if ObjectList.is_kvm_cpu(CPUClass) or ObjectList.is_kvm_cpu(FutureClass):
-    if buildEnv['TARGET_ISA'] == 'x86':
-        system.kvm_vm = KvmVM()
-        for process in multiprocesses:
-            process.useArchPT = True
-            process.kvmInSE = True
-    else:
-        fatal("KvmCPU can only be used in SE mode with x86")
-
 # Sanity check
 if options.simpoint_profile:
     if not ObjectList.is_noncaching_cpu(CPUClass):
@@ -247,36 +244,12 @@ for i in range(np):
 
     system.cpu[i].createThreads()
 
-if options.ruby:
-    Ruby.create_system(options, False, system)
-    assert(options.num_cpus == len(system.ruby._cpu_ports))
-
-    system.ruby.clk_domain = SrcClockDomain(clock = options.ruby_clock,
-                                        voltage_domain = system.voltage_domain)
-    for i in range(np):
-        ruby_port = system.ruby._cpu_ports[i]
-
-        # Create the interrupt controller and connect its ports to Ruby
-        # Note that the interrupt controller is always present but only
-        # in x86 does it have message ports that need to be connected
-        system.cpu[i].createInterruptController()
-
-        # Connect the cpu's cache ports to Ruby
-        system.cpu[i].icache_port = ruby_port.slave
-        system.cpu[i].dcache_port = ruby_port.slave
-        if buildEnv['TARGET_ISA'] == 'x86':
-            system.cpu[i].interrupts[0].pio = ruby_port.master
-            system.cpu[i].interrupts[0].int_master = ruby_port.slave
-            system.cpu[i].interrupts[0].int_slave = ruby_port.master
-            system.cpu[i].itb.walker.port = ruby_port.slave
-            system.cpu[i].dtb.walker.port = ruby_port.slave
-else:
-    MemClass = Simulation.setMemClass(options)
-    system.membus = SystemXBar()
-    system.system_port = system.membus.slave
-    CacheConfig.config_cache(options, system)
-    MemConfig.config_mem(options, system)
-    config_filesystem(system, options)
+MemClass = Simulation.setMemClass(options)
+system.membus = SystemXBar()
+system.system_port = system.membus.slave
+CacheConfig.config_cache(options, system)
+MemConfig.config_mem(options, system)
+config_filesystem(system, options)
 
 root = Root(full_system = False, system = system)
 Simulation.run(options, root, system, FutureClass)
