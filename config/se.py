@@ -140,7 +140,14 @@ options.cpu_clock = '1MHz'
 options.sys_clock = '1GHz'
 options.l2cache = False
 options.cacheline_size = 256
-
+options.l1i_size = '64kB'
+options.l1i_assoc = 4
+options.l1d_size = '64kB'
+options.l1d_assoc = 4
+options.bp_type = "TournamentBP"
+options.indirect_bp_type= "SimpleIndirectPredictor"
+options.l1d_hwp_type = False
+options.l1i_hwp_type = False
 if options.bench:
     apps = options.bench.split("-")
     if len(apps) != options.num_cpus:
@@ -244,12 +251,31 @@ for i in range(np):
 
     system.cpu[i].createThreads()
 
+system.cpu[0].fetchWidth=2
+system.cpu[0].issueWidth=2
+system.cpu[0].dispatchWidth=2
+system.cpu[0].decodeWidth=2
+system.cpu[0].commitWidth=2
+system.cpu[0].renameWidth=2
+system.cpu[0].wbWidth=4
+system.cpu[0].squashWidth=2
+system.cpu[0].commitToIEWDelay=2
+
+system.cpu[0].LQEntries=2
+system.cpu[0].SQEntries=2
+system.cpu[0].LFSTSize=1
+system.cpu[0].SSITSize=1
+system.cpu[0].numPhysIntRegs = 64
+
 MemClass = Simulation.setMemClass(options)
 system.membus = SystemXBar()
 system.system_port = system.membus.slave
 CacheConfig.config_cache(options, system)
 MemConfig.config_mem(options, system)
 config_filesystem(system, options)
+
+system.cpu[0].icache.mshrs = 1
+system.cpu[0].dcache.mshrs = 1
 
 root = Root(full_system = False, system = system)
 Simulation.run(options, root, system, FutureClass)

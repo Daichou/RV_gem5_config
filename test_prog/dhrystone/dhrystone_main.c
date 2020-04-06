@@ -186,7 +186,8 @@ int main (int argc, char** argv)
 
     Stop_Timer();
     setStats(0);
-
+    printf("Begin_Time = %lu\n",Begin_Time);
+    printf("End_Time = %lu\n",End_Time);
     User_Time = End_Time - Begin_Time;
 
     if (User_Time < Too_Small_Time)
