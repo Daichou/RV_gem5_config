@@ -54,6 +54,11 @@ from m5.defines import buildEnv
 from m5.objects import *
 from m5.util import addToPath, fatal, warn
 
+# FuPool
+from m5.params import *
+from m5.objects.FuncUnit import *
+from m5.objects.FuncUnitConfig import *
+
 addToPath('/')
 
 from ruby import Ruby
@@ -118,6 +123,9 @@ def get_processes(options):
     else:
         return multiprocesses, 1
 
+class CustomFUPool(FUPool):
+    CustomFUList = [IntALU(), IntMultDiv(), ReadPort(),
+		   WritePort(), RdWrPort(), IprPort() ]
 
 parser = optparse.OptionParser()
 Options.addCommonOptions(parser)
@@ -266,7 +274,7 @@ system.cpu[0].SQEntries=2
 system.cpu[0].LFSTSize=1
 system.cpu[0].SSITSize=1
 system.cpu[0].numPhysIntRegs = 64
-
+#system.cpu[0].fuPool = Param.FUPool(DefaultFUPool(), "Functional Unit pool")
 MemClass = Simulation.setMemClass(options)
 system.membus = SystemXBar()
 system.system_port = system.membus.slave
@@ -276,6 +284,7 @@ config_filesystem(system, options)
 
 system.cpu[0].icache.mshrs = 1
 system.cpu[0].dcache.mshrs = 1
+
 
 root = Root(full_system = False, system = system)
 Simulation.run(options, root, system, FutureClass)
